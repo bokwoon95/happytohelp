@@ -1,0 +1,27 @@
+.comfortaa {
+  font-family: 'Comfortaa', cursive;
+}
+
+.h-50px {
+  height: 50px;
+}
+
+.h-100px {
+  height: 100px;
+}
+
+.h-200px {
+  height: 200px;
+}
+
+.border-25px {
+  border-radius: 25px;
+}
+
+.offcenter {
+  margin-left: -10px;
+}
+
+.pl-60p {
+  padding-left: 60%;
+}
