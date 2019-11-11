@@ -6,12 +6,24 @@
   height: 50px;
 }
 
+.min-h-50px {
+  min-height: 50px;
+}
+
 .h-100px {
   height: 100px;
 }
 
+.min-h-100px {
+  min-height: 100px;
+}
+
 .h-200px {
   height: 200px;
+}
+
+.min-h-200px {
+  min-height: 200px;
 }
 
 .border-25px {
@@ -24,4 +36,17 @@
 
 .pl-60p {
   padding-left: 60%;
+}
+
+::-webkit-input-placeholder {
+   font-style: italic;
+}
+:-moz-placeholder {
+   font-style: italic;
+}
+::-moz-placeholder {
+   font-style: italic;
+}
+:-ms-input-placeholder {
+   font-style: italic;
 }

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link href="https://unpkg.com/tailwindcss@^1.0/dist/tailwind.min.css" rel="stylesheet" />
+    <link href="/static/style.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css?family=Comfortaa&display=swap" rel="stylesheet" />
+    <title></title>
+  </head>
+  <body>
+    <nav class="flex justify-between bg-yellow-400 p-2">
+      <a href="/" class="">Logo</a>
+      <div class="">Hamburger</div>
+    </nav>
+    <div class="comfortaa text-3xl text-center py-4">What do you want to talk about?</div>
+    <div class="px-8">
+      <div class="bg-yellow-400 block min-h-200px p-8 border-25px comfortaa text-xl">
+        <p>Our volunteers would like to know you a bt better so we can help you more. Please share just anything you are comfortable with disclosing.</p>
+      </div>
+    </div>
+    <form method="POST" action="" class="px-8 pt-8" id="disclosureform">
+      <textarea
+        type="text"
+        placeholder="Type here..."
+        class="bg-red-300 block w-full align-text-top px-8 py-4 border-25px comfortaa placeholder-gray-600"
+      ></textarea>
+    </form>
+    <button form="disclosureform" class="mx-8 mt-4 bg-yellow-400 py-2 px-4 border-25px border-4 border-gray-500">Submit</button>
+  </body>
+</html>
