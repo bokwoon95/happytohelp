@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func (app App) studentCategory(w http.ResponseWriter, r *http.Request) {
+func (app *App) studentCategory(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.URL)
 	if r.Method != "GET" {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -17,7 +17,7 @@ func (app App) studentCategory(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (app App) studentDisclosure(w http.ResponseWriter, r *http.Request) {
+func (app *App) studentDisclosure(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.URL)
 	switch r.Method {
 	case "GET":
@@ -32,7 +32,7 @@ func (app App) studentDisclosure(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (app App) studentChat(w http.ResponseWriter, r *http.Request) {
+func (app *App) studentChat(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.URL)
 	switch r.Method {
 	case "GET":

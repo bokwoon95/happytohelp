@@ -6,6 +6,11 @@
     </a>
   </div>
   <div class="flex items-center pr-1">
+    {{with $user := AppGetUser}}
+      {{if not (eq $user.Displayname "")}}
+        <span class="text-lg font-bold px-4">Hello, {{$user.Displayname}}</span>
+      {{end}}
+    {{end}}
     <img src="/static/img/hamburgermenu.svg" alt="menu" height="40" width="40" />
   </div>
 </nav>

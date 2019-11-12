@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"database/sql"
@@ -16,10 +17,19 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 
 	_ "github.com/joho/godotenv/autoload"
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
+)
+
+const sessionCookieName = "_happytohelp_session"
+
+type appContext string
+
+const (
+	contextUser appContext = "contextUser"
 )
 
 type App struct {
@@ -27,6 +37,62 @@ type App struct {
 	hash    hash.Hash
 	baseurl string
 	port    string
+}
+
+type User struct {
+	Username    string
+	Displayname string
+	Email       string
+}
+
+func main() {
+	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	if err != nil {
+		log.Fatal("can't open db: ", err)
+	}
+	err = db.Ping()
+	if err != nil {
+		log.Fatal("can't ping db: ", err)
+	}
+	app := App{
+		db:      db,
+		baseurl: os.Getenv("BASEURL"),
+		port:    os.Getenv("PORT"),
+		hash:    hmac.New(sha256.New, []byte(os.Getenv("HMAC_KEY"))),
+	}
+	hub := newHub()
+	go hub.run()
+
+	http.HandleFunc("/", app.root)
+
+	// Student
+	http.HandleFunc("/student/category", app.studentCategory)
+	http.HandleFunc("/student/disclosure", app.studentDisclosure)
+	http.HandleFunc("/student/chat", app.studentChat)
+	http.HandleFunc("/student/chat/ws", func(w http.ResponseWriter, r *http.Request) {
+		serveWs(hub, w, r)
+	})
+
+	// Counsellor
+	http.HandleFunc("/counsellor/login", nusRedirect(app.baseurl+app.port+"/counsellor/login/callback"))
+	http.HandleFunc("/counsellor/login/callback", nusAuthenticate(app.setsession(redirect("/counsellor/category"))))
+	http.HandleFunc("/counsellor/category", app.getsession(app.counsellorCategory))
+	http.HandleFunc("/counsellor/choose", app.getsession(app.counsellorChoose))
+	http.HandleFunc("/counsellor/chat", app.getsession(app.counsellorChat))
+	http.HandleFunc("/counsellor/chat/ws", func(w http.ResponseWriter, r *http.Request) {
+		serveWs(hub, w, r)
+	})
+
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	fmt.Printf("Listening on " + app.baseurl + app.port)
+	err = http.ListenAndServe(app.port, nil)
+	if err != nil {
+		log.Fatal("ListenAndServe: ", err)
+	}
+}
+
+func (user User) String() string {
+	return fmt.Sprintf("username:%s displayname:%s email:%s", user.Username, user.Displayname, user.Email)
 }
 
 func (app *App) sign(input []byte) (output string) {
@@ -74,7 +140,7 @@ func notfound(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "404.html")
 }
 
-func (app App) root(w http.ResponseWriter, r *http.Request) {
+func (app *App) root(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.URL)
 	if r.URL.Path != "/" {
 		notfound(w, r)
@@ -94,6 +160,12 @@ func render(w http.ResponseWriter, r *http.Request, data interface{}, filenames 
 		return wrap(fmt.Errorf("no filenames provided to Render"))
 	}
 	funcs := template.FuncMap{}
+	funcs["AppGetUser"] = func(r *http.Request) func() User {
+		user, _ := r.Context().Value(contextUser).(User)
+		return func() User {
+			return user
+		}
+	}(r)
 	filenames = append(filenames, "navbar.html")
 	t, err := template.New(filepath.Base(filenames[0])).Funcs(funcs).ParseFiles(filenames...)
 	if err != nil {
@@ -124,50 +196,55 @@ func dump(w io.Writer, err error) {
 	fmt.Fprintf(w, fmtedErr)
 }
 
-func main() {
-	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
-	if err != nil {
-		log.Fatal("can't open db: ", err)
+func (app *App) setsession(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		username, ok1 := r.Context().Value("username").(string)
+		displayname, ok2 := r.Context().Value("displayname").(string)
+		email, ok3 := r.Context().Value("email").(string)
+		user := User{Username: username, Displayname: displayname, Email: email}
+		if !ok1 || !ok2 || !ok3 {
+			fmt.Fprintf(w, "could not get all details %s", user)
+			return
+		}
+		serializedUser, err := app.serialize(user)
+		if err != nil {
+			dump(w, err)
+			return
+		}
+		http.SetCookie(w, &http.Cookie{
+			Name:     sessionCookieName,
+			Value:    serializedUser,
+			HttpOnly: true, // disable JavaScript access to cookie
+			// Secure:   true, // allow sending only over HTTPS
+			SameSite: http.SameSiteLaxMode,
+			MaxAge:   int((time.Hour * 24 * 30).Seconds()), // one month
+			Path:     "/",
+		})
+		next(w, r)
 	}
-	err = db.Ping()
-	if err != nil {
-		log.Fatal("can't ping db: ", err)
+}
+
+func (app *App) getsession(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		sessionCookie, err := r.Cookie(sessionCookieName)
+		if err != nil {
+			http.Error(w, "", http.StatusUnauthorized)
+			return
+		}
+		var user User
+		err = app.deserialize(sessionCookie.Value, &user)
+		if err != nil {
+			dump(w, err)
+			return
+		}
+		ctx := r.Context()
+		ctx = context.WithValue(ctx, contextUser, user)
+		next(w, r.WithContext(ctx))
 	}
-	app := App{
-		db:      db,
-		baseurl: os.Getenv("BASEURL"),
-		port:    os.Getenv("PORT"),
-		hash:    hmac.New(sha256.New, []byte(os.Getenv("HMAC_KEY"))),
-	}
-	hub := newHub()
-	go hub.run()
+}
 
-	http.HandleFunc("/", app.root)
-
-	// Student
-	http.HandleFunc("/student/category", app.studentCategory)
-	http.HandleFunc("/student/disclosure", app.studentDisclosure)
-	http.HandleFunc("/student/chat", app.studentChat)
-	http.HandleFunc("/student/chat/ws", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("gotcha")
-		serveWs(hub, w, r)
-	})
-
-	// Counsellor
-	http.HandleFunc("/counsellor/login", nusRedirect(app.baseurl+app.port+"/counsellor/login/callback"))
-	http.HandleFunc("/counsellor/login/callback", nusAuthenticate(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("welcome"))
-	}))
-	http.HandleFunc("/counsellor/category", app.studentCategory)
-	http.HandleFunc("/counsellor/chat", app.counsellorChat)
-	http.HandleFunc("/counsellor/chat/ws", func(w http.ResponseWriter, r *http.Request) {
-		serveWs(hub, w, r)
-	})
-
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
-	fmt.Printf("Listening on " + app.baseurl + app.port)
-	err = http.ListenAndServe(app.port, nil)
-	if err != nil {
-		log.Fatal("ListenAndServe: ", err)
+func redirect(url string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, url, http.StatusMovedPermanently)
 	}
 }
