@@ -50,7 +50,7 @@ func (app *App) studentDisclosure(w http.ResponseWriter, r *http.Request) {
 		// Create new chat room
 		app.chatrooms.Lock()
 		defer app.chatrooms.Unlock()
-		room := newChatroom()
+		room := newChatroom(app.chatrooms)
 		go room.run()
 		room.Topics = topics
 		room.PinnedMessage = r.FormValue("disclosure")

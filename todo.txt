@@ -1,1 +1,1 @@
-do I need chi router to implement websocket differently?
+Prettify counsellor_topics & student_topics page

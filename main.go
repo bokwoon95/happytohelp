@@ -66,10 +66,7 @@ func main() {
 			fullRooms:    make(map[string]*Chatroom),
 		},
 	}
-	room := newChatroom()
-	go room.run()
-
-	http.HandleFunc("/", app.root)
+	http.HandleFunc("/", app.maybegetsession(app.root))
 
 	// Student
 	http.HandleFunc("/student/topics", app.studentTopics)
@@ -240,6 +237,28 @@ func (app *App) setsession(next http.HandlerFunc) http.HandlerFunc {
 			Path:     "/",
 		})
 		next(w, r)
+	}
+}
+
+func (app *App) maybegetsession(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		var user User
+		sessionCookie, err := r.Cookie(sessionCookieName)
+		nextfn := func() {
+			ctx = context.WithValue(ctx, contextUser, user)
+			next(w, r.WithContext(ctx))
+		}
+		if err != nil {
+			nextfn()
+			return
+		}
+		err = app.deserialize(sessionCookie.Value, &user)
+		if err != nil {
+			dump(w, err)
+			return
+		}
+		nextfn()
 	}
 }
 

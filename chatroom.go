@@ -3,16 +3,19 @@ package main
 import "sync"
 
 const (
-	TopicAcademics = "academics"
-	TopicCareer = "career"
+	TopicAcademics    = "academics"
+	TopicCareer       = "career"
 	TopicRelationship = "relationship"
-	TopicOther = "other"
+	TopicOther        = "other"
 )
 
 // Chatroom maintains the set of active clients and broadcasts messages to the
 // clients.
 type Chatroom struct {
 	sync.Mutex
+
+	// Reference to the parent Chatrooms struct
+	chatrooms *Chatrooms
 
 	// Registered clients.
 	clients map[*Client]bool
@@ -46,8 +49,9 @@ type Chatrooms struct {
 	fullRooms map[string]*Chatroom
 }
 
-func newChatroom() *Chatroom {
+func newChatroom(chatrooms *Chatrooms) *Chatroom {
 	return &Chatroom{
+		chatrooms:  chatrooms,
 		broadcast:  make(chan []byte),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
@@ -70,6 +74,16 @@ func (room *Chatroom) run() {
 			if _, ok := room.clients[client]; ok {
 				delete(room.clients, client)
 				close(client.send)
+			}
+			if len(room.clients) == 0 {
+				room.chatrooms.Lock()
+				for k, r := range room.chatrooms.pendingRooms {
+					if r == room {
+						delete(room.chatrooms.pendingRooms, k)
+					}
+				}
+				room.chatrooms.Unlock()
+				return
 			}
 			room.Unlock()
 		case message := <-room.broadcast:

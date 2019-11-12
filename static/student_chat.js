@@ -1,7 +1,7 @@
 "use strict";
 
 let conn;
-let messages = ["Please wait while we find you an available counsellor", "..."];
+let messages = [];
 
 function appendLog(item) {
   let doScroll = log.scrollTop > log.scrollHeight - log.clientHeight - 1;
@@ -50,14 +50,24 @@ m.mount(document.querySelector("#chat"), {
       m.redraw();
     };
   },
-  view: () =>
-    m(
-      "div.bg-blue-800.min-h-screen",
-      m("div.bg-gray-100.overflow-auto.min-h-200px.p-8", messages.map(msg => m("p", msg))),
-      m(
-        "form",
-        m("textarea.w-full.bg-gray-200.border-box.p-2", { id: "chatbox", onkeypress: sendmsgOnSubmitOrEnter }),
-        m("button.p-2.bg-green-200", { onclick: sendmsgOnSubmitOrEnter }, "Submit"),
-      ),
-    ),
+  view: () => {
+    return messages.length == 0
+      ? m(
+          "div",
+          m("div.text-center.text-5xl.hth-text-blue-300.px-16", "Thank you! Please give our volunteers some time to connect with you"),
+          m("img.m-auto", { src: "/static/img/HappyToHelp_Logo.svg", height: 500, width: 500 }),
+        )
+      : m(
+          "div.hth-bg-blue-300.min-h-screen",
+          m(
+            "div.hth-bg-blue-300.overflow-auto.min-h-200px.p-8",
+            messages.map(msg => m("div.mx-4.bg-gray-200.p-4.mb-8.rounded", msg)),
+          ),
+          m(
+            "form.px-12",
+            m("textarea.w-full.bg-white.border-box.p-2.rounded", { id: "chatbox", onkeypress: sendmsgOnSubmitOrEnter }),
+            m("button.p-2.bg-green-200.rounded", { onclick: sendmsgOnSubmitOrEnter }, "Submit"),
+          ),
+        );
+  },
 });

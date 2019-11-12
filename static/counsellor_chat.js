@@ -52,12 +52,15 @@ m.mount(document.querySelector("#chat"), {
   },
   view: () =>
     m(
-      "div.bg-blue-800.min-h-screen",
-      m("div.bg-gray-100.overflow-auto.min-h-200px.p-8", messages.map(msg => m("p", msg))),
+      "div.hth-bg-blue-300.min-h-screen",
       m(
-        "form",
-        m("textarea.w-full.bg-gray-200.border-box.p-2", { id: "chatbox", onkeypress: sendmsgOnSubmitOrEnter }),
-        m("button.p-2.bg-green-200", { onclick: sendmsgOnSubmitOrEnter }, "Submit"),
+        "div.hth-bg-blue-300.overflow-auto.min-h-200px.p-8",
+        messages.map(msg => m("div.mx-4.bg-gray-200.p-4.mb-8.rounded", msg)),
+      ),
+      m(
+        "form.px-12",
+        m("textarea.w-full.bg-white.border-box.p-2.rounded", { id: "chatbox", onkeypress: sendmsgOnSubmitOrEnter }),
+        m("button.p-2.bg-green-200.rounded", { onclick: sendmsgOnSubmitOrEnter }, "Submit"),
       ),
     ),
 });
