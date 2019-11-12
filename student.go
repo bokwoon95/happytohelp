@@ -6,7 +6,7 @@ import (
 	"net/url"
 )
 
-func (app *App) studentTopic(w http.ResponseWriter, r *http.Request) {
+func (app *App) studentTopics(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.URL)
 	if r.Method != "GET" {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)

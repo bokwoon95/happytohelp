@@ -72,7 +72,7 @@ func main() {
 	http.HandleFunc("/", app.root)
 
 	// Student
-	http.HandleFunc("/student/topics", app.studentTopic)
+	http.HandleFunc("/student/topics", app.studentTopics)
 	http.HandleFunc("/student/disclosure", app.studentDisclosure)
 	http.HandleFunc("/student/chat", app.studentChat)
 	http.HandleFunc("/student/chat/ws", app.studentWs)
