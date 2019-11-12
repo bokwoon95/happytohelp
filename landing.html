@@ -11,16 +11,18 @@
     {{template "navbar.html"}}
     <div class="px-8 pt-8">
       <a
-        href="/category"
-        class="bg-red-400 flex h-200px border-25px items-center justify-center glacialindifference font-bold text-3xl"
+        href="/student/category"
+        class="hth-bg-orange-100 flex h-200px border-25px items-center justify-center glacialindifference font-bold text-3xl"
       >
         I need someone to talk to...
       </a>
     </div>
     <div class="px-8 pt-8">
-      <a href="" class="bg-red-200 flex h-100px border-25px items-center justify-center glacialindifference text-2xl">
-        I'm here to provide help
-      </a>
+      <form method="POST" action="/counsellor/login" class="w-full">
+        <button class="bg-red-200 flex h-100px border-25px items-center justify-center glacialindifference text-2xl w-full">
+          I'm here to provide help
+        </button>
+      </form>
     </div>
   </body>
 </html>

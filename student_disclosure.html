@@ -9,19 +9,19 @@
   </head>
   <body>
     {{template "navbar.html"}}
-    <div class="glacialindifference text-3xl text-center py-4">What do you want to talk about?</div>
+    <div class="glacialindifference text-3xl font-bold hth-text-blue-300 text-center py-4">What do you want to talk about?</div>
     <div class="px-8">
-      <div class="bg-yellow-400 block min-h-200px p-8 border-25px glacialindifference text-xl">
+      <div class="hth-bg-yellow-100 block min-h-200px p-8 border-25px glacialindifference text-xl">
         <p>Our volunteers would like to know you a bit better so we can help you more. Please share just anything you are comfortable with disclosing.</p>
       </div>
     </div>
-    <form method="POST" action="/disclosure" class="px-8 pt-8" id="disclosureform">
+    <form method="POST" action="/student/disclosure" class="px-8 pt-8" id="disclosureform">
       <textarea
         type="text"
         placeholder="Type here..."
-        class="bg-red-300 block w-full align-text-top px-8 py-4 border-25px glacialindifference placeholder-gray-600"
+        class="hth-bg-orange-100 block w-full align-text-top px-8 py-4 border-25px glacialindifference placeholder-gray-700"
       ></textarea>
     </form>
-    <button form="disclosureform" class="mx-8 mt-4 bg-yellow-400 py-2 px-4 border-25px border-4 border-gray-500">Submit</button>
+    <button form="disclosureform" class="mx-8 mt-4 bg-yellow-400 py-2 px-4 border-25px border-4 border-gray-500">DONE</button>
   </body>
 </html>

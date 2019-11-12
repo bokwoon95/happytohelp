@@ -1,0 +1,5 @@
+restrict chat to between one student-counsellor pair only, any new chats must be new websocket conns (different URLs maybe?)
+    might need to bring in chi router
+    oh no, do multiple hubs need to be created per chat? yikes
+differentiate between messages sent by counsellor and messages sent by student
+implement some scrolling logic

@@ -1,8 +1,13 @@
 package main
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
 	"database/sql"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"hash"
 	"html/template"
 	"io"
 	"log"
@@ -18,7 +23,51 @@ import (
 )
 
 type App struct {
-	db *sql.DB
+	db      *sql.DB
+	hash    hash.Hash
+	baseurl string
+	port    string
+}
+
+func (app *App) sign(input []byte) (output string) {
+	app.hash.Reset()
+	app.hash.Write(input)
+	b := app.hash.Sum(nil)
+	output = base64.URLEncoding.EncodeToString(b)
+	return output
+}
+
+func (app *App) serialize(input interface{}) (output string, err error) {
+	payload, err := json.Marshal(input)
+	if err != nil {
+		return "", wrap(err)
+	}
+	encodedPayload := base64.URLEncoding.EncodeToString(payload)
+	signature := app.sign(payload)
+	output = encodedPayload + "." + signature
+	return output, nil
+}
+
+func (app *App) deserialize(input string, output interface{}) (err error) {
+	strs := strings.SplitN(input, ".", 2)
+	if len(strs) < 2 {
+		return fmt.Errorf("No '.' found in input %s", input)
+	}
+	encodedPayload := strs[0]
+	providedSignature := strs[1]
+	payload, err := base64.URLEncoding.DecodeString(encodedPayload)
+	if err != nil {
+		return wrap(err)
+	}
+	computedSignature := app.sign(payload)
+	if providedSignature != computedSignature {
+		return fmt.Errorf("providedSignature did not match computedSignature %+v", struct {
+			Provided string
+			Computed string
+		}{providedSignature, computedSignature})
+	}
+	err = json.Unmarshal(payload, output)
+	return wrap(err)
 }
 
 func notfound(w http.ResponseWriter, r *http.Request) {
@@ -40,62 +89,6 @@ func (app App) root(w http.ResponseWriter, r *http.Request) {
 		dump(w, err)
 	}
 }
-
-func (app App) category(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.URL)
-	if r.Method != "GET" {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-	err := render(w, r, nil, "category.html")
-	if err != nil {
-		dump(w, err)
-	}
-}
-
-func (app App) disclosure(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.URL)
-	switch r.Method {
-	case "GET":
-		err := render(w, r, nil, "disclosure.html")
-		if err != nil {
-			dump(w, err)
-			return
-		}
-	case "POST":
-		http.Redirect(w, r, "/student-chat", http.StatusSeeOther)
-	}
-}
-
-func (app App) studentChat(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.URL)
-	switch r.Method {
-	case "GET":
-		err := render(w, r, nil, "student_chat.html")
-		if err != nil {
-			dump(w, err)
-		}
-	default:
-		notfound(w, r)
-		return
-	}
-}
-
-func (app App) counsellorChat(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.URL)
-	switch r.Method {
-	case "GET":
-		err := render(w, r, nil, "counsellor_chat.html")
-		if err != nil {
-			dump(w, err)
-			return
-		}
-	default:
-		notfound(w, r)
-		return
-	}
-}
-
 func render(w http.ResponseWriter, r *http.Request, data interface{}, filenames ...string) (err error) {
 	if len(filenames) == 0 {
 		return wrap(fmt.Errorf("no filenames provided to Render"))
@@ -114,7 +107,6 @@ func render(w http.ResponseWriter, r *http.Request, data interface{}, filenames 
 func wrap(err error) error {
 	if err != nil {
 		if err == sql.ErrNoRows || err == http.ErrNoCookie {
-			// If its either a no sql row error or no cookie error, don't wrap the error otherwise it wouldn't be identifieable as sql.ErrNoRows or http.ErrNoCookie
 			return err
 		} else {
 			pc, filename, linenr, _ := runtime.Caller(1)
@@ -141,22 +133,40 @@ func main() {
 	if err != nil {
 		log.Fatal("can't ping db: ", err)
 	}
-	app := App{db}
+	app := App{
+		db:      db,
+		baseurl: os.Getenv("BASEURL"),
+		port:    os.Getenv("PORT"),
+		hash:    hmac.New(sha256.New, []byte(os.Getenv("HMAC_KEY"))),
+	}
 	hub := newHub()
 	go hub.run()
+
 	http.HandleFunc("/", app.root)
-	http.HandleFunc("/category", app.category)
-	http.HandleFunc("/disclosure", app.disclosure)
-	http.HandleFunc("/student-chat", app.studentChat)
-	http.HandleFunc("/student-chat/ws", func(w http.ResponseWriter, r *http.Request) {
+
+	// Student
+	http.HandleFunc("/student/category", app.studentCategory)
+	http.HandleFunc("/student/disclosure", app.studentDisclosure)
+	http.HandleFunc("/student/chat", app.studentChat)
+	http.HandleFunc("/student/chat/ws", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("gotcha")
 		serveWs(hub, w, r)
 	})
-	http.HandleFunc("/counsellor-chat", app.counsellorChat)
-	http.HandleFunc("/counsellor-chat/ws", func(w http.ResponseWriter, r *http.Request) {
+
+	// Counsellor
+	http.HandleFunc("/counsellor/login", nusRedirect(app.baseurl+app.port+"/counsellor/login/callback"))
+	http.HandleFunc("/counsellor/login/callback", nusAuthenticate(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("welcome"))
+	}))
+	http.HandleFunc("/counsellor/category", app.studentCategory)
+	http.HandleFunc("/counsellor/chat", app.counsellorChat)
+	http.HandleFunc("/counsellor/chat/ws", func(w http.ResponseWriter, r *http.Request) {
 		serveWs(hub, w, r)
 	})
+
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
-	err = http.ListenAndServe(":8080", nil)
+	fmt.Printf("Listening on " + app.baseurl + app.port)
+	err = http.ListenAndServe(app.port, nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}

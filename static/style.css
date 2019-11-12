@@ -60,24 +60,44 @@
   font-family: 'Glacial Indifference', sans-serif;
 }
 
-.hth-blue-100 {
+.hth-text-blue-100 {
   color: #d1fdfe;
 }
 
-.hth-blue-200 {
+.hth-text-blue-200 {
   color: #b4dfe5;
 }
 
-.hth-blue-300 {
+.hth-text-blue-300 {
   color: #303c6c;
 }
 
-.hth-orange-100 {
+.hth-text-orange-100 {
   color: #f4966c;
 }
 
-.hth-yellow-100 {
+.hth-text-yellow-100 {
   color: #fae8a6;
+}
+
+.hth-bg-blue-100 {
+  background-color: #d1fdfe;
+}
+
+.hth-bg-blue-200 {
+  background-color: #b4dfe5;
+}
+
+.hth-bg-blue-300 {
+  background-color: #303c6c;
+}
+
+.hth-bg-orange-100 {
+  background-color: #f4966c;
+}
+
+.hth-bg-yellow-100 {
+  background-color: #fae8a6;
 }
 
 .border-box {
