@@ -1,16 +1,25 @@
 package main
 
 import (
+	"database/sql"
 	"html/template"
 	"log"
 	"net/http"
+	"os"
+
+	_ "github.com/joho/godotenv/autoload"
+	_ "github.com/lib/pq"
 )
+
+type App struct {
+	db *sql.DB
+}
 
 func notfound(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "404.html")
 }
 
-func landing(w http.ResponseWriter, r *http.Request) {
+func (app App) landing(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.URL)
 	if r.URL.Path != "/" {
 		notfound(w, r)
@@ -23,7 +32,7 @@ func landing(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "landing.html")
 }
 
-func category(w http.ResponseWriter, r *http.Request) {
+func (app App) category(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.URL)
 	if r.Method != "GET" {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -32,7 +41,7 @@ func category(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "category.html")
 }
 
-func disclosure(w http.ResponseWriter, r *http.Request) {
+func (app App) disclosure(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.URL)
 	switch r.Method {
 	case "GET":
@@ -51,7 +60,7 @@ func disclosure(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func studentChat(w http.ResponseWriter, r *http.Request) {
+func (app App) studentChat(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.URL)
 	switch r.Method {
 	case "GET":
@@ -71,7 +80,7 @@ func studentChat(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func counsellorChat(w http.ResponseWriter, r *http.Request) {
+func (app App) counsellorChat(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.URL)
 	switch r.Method {
 	case "GET":
@@ -92,21 +101,30 @@ func counsellorChat(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	if err != nil {
+		log.Fatal("can't open db: ", err)
+	}
+	err = db.Ping()
+	if err != nil {
+		log.Fatal("can't ping db: ", err)
+	}
+	app := App{db}
 	hub := newHub()
 	go hub.run()
-	http.HandleFunc("/", landing)
-	http.HandleFunc("/category", category)
-	http.HandleFunc("/disclosure", disclosure)
-	http.HandleFunc("/student-chat", studentChat)
+	http.HandleFunc("/", app.landing)
+	http.HandleFunc("/category", app.category)
+	http.HandleFunc("/disclosure", app.disclosure)
+	http.HandleFunc("/student-chat", app.studentChat)
 	http.HandleFunc("/student-chat/ws", func(w http.ResponseWriter, r *http.Request) {
 		serveWs(hub, w, r)
 	})
-	http.HandleFunc("/counsellor-chat", counsellorChat)
+	http.HandleFunc("/counsellor-chat", app.counsellorChat)
 	http.HandleFunc("/counsellor-chat/ws", func(w http.ResponseWriter, r *http.Request) {
 		serveWs(hub, w, r)
 	})
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
-	err := http.ListenAndServe(":8080", nil)
+	err = http.ListenAndServe(":8080", nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
