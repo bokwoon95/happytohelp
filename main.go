@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"crypto/hmac"
+	"crypto/rand"
 	"crypto/sha256"
 	"database/sql"
 	"encoding/base64"
@@ -33,10 +34,11 @@ const (
 )
 
 type App struct {
-	db      *sql.DB
-	hash    hash.Hash
-	baseurl string
-	port    string
+	db        *sql.DB
+	hash      hash.Hash
+	baseurl   string
+	port      string
+	chatrooms *Chatrooms
 }
 
 type User struct {
@@ -59,6 +61,10 @@ func main() {
 		baseurl: os.Getenv("BASEURL"),
 		port:    os.Getenv("PORT"),
 		hash:    hmac.New(sha256.New, []byte(os.Getenv("HMAC_KEY"))),
+		chatrooms: &Chatrooms{
+			pendingRooms: make(map[string]*Chatroom),
+			fullRooms:    make(map[string]*Chatroom),
+		},
 	}
 	room := newChatroom()
 	go room.run()
@@ -69,10 +75,7 @@ func main() {
 	http.HandleFunc("/student/topics", app.studentTopic)
 	http.HandleFunc("/student/disclosure", app.studentDisclosure)
 	http.HandleFunc("/student/chat", app.studentChat)
-	http.HandleFunc("/student/chat/ws", func(w http.ResponseWriter, r *http.Request) {
-		log.Println("topics: " + r.FormValue("topics"))
-		serveWs(room, w, r)
-	})
+	http.HandleFunc("/student/chat/ws", app.studentWs)
 
 	// Counsellor
 	http.HandleFunc("/counsellor/login", nusRedirect(app.baseurl+app.port+"/counsellor/login/callback"))
@@ -80,9 +83,7 @@ func main() {
 	http.HandleFunc("/counsellor/topics", app.getsession(app.counsellorTopic))
 	http.HandleFunc("/counsellor/choose", app.getsession(app.counsellorChoose))
 	http.HandleFunc("/counsellor/chat", app.getsession(app.counsellorChat))
-	http.HandleFunc("/counsellor/chat/ws", func(w http.ResponseWriter, r *http.Request) {
-		serveWs(room, w, r)
-	})
+	http.HandleFunc("/counsellor/chat/ws", app.studentWs)
 
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	fmt.Printf("Listening on " + app.baseurl + app.port)
@@ -160,6 +161,15 @@ func (app *App) deserialize(input string, output interface{}) (err error) {
 	}
 	err = json.Unmarshal(payload, output)
 	return wrap(err)
+}
+
+func generateRandomString() (string, error) {
+	arr := make([]byte, 32)
+	_, err := rand.Read(arr)
+	if err != nil {
+		return "", err
+	}
+	return base64.URLEncoding.EncodeToString(arr), nil
 }
 
 func (app *App) notfound(w http.ResponseWriter, r *http.Request) {

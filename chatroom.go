@@ -18,7 +18,10 @@ type Chatroom struct {
 	clients map[*Client]bool
 
 	// Topics that the student wishes to talk about
-	topics []string
+	Topics []string
+
+	// Whatever the student disclosed in the disclosure page
+	PinnedMessage string
 
 	// Inbound messages from the clients.
 	broadcast chan []byte
@@ -37,12 +40,10 @@ type Chatrooms struct {
 	sync.Mutex
 
 	// List of rooms with one student waiting for a counsellor
-	pendingRooms map[*Chatroom]bool
+	pendingRooms map[string]*Chatroom
 
 	// List of rooms with one student and one counsellor already inside
-	fullRooms map[*Chatroom]bool
-
-	//
+	fullRooms map[string]*Chatroom
 }
 
 func newChatroom() *Chatroom {

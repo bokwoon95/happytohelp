@@ -51,7 +51,21 @@ func (app *App) counsellorChoose(w http.ResponseWriter, r *http.Request) {
 	}
 	switch r.Method {
 	case "GET":
-		err := render(w, r, nil, "counsellor_choose.html")
+		app.chatrooms.Lock()
+		defer app.chatrooms.Unlock()
+		type TupleRoom struct {
+			Key  string
+			Room *Chatroom
+		}
+		var pendingRooms []TupleRoom
+		for key, room := range app.chatrooms.pendingRooms {
+			pendingRooms = append(pendingRooms, TupleRoom{Key: key, Room: room})
+		}
+		type Data struct {
+			PendingRooms []TupleRoom
+		}
+		data := Data{PendingRooms: pendingRooms}
+		err := render(w, r, data, "counsellor_choose.html")
 		if err != nil {
 			dump(w, err)
 		}

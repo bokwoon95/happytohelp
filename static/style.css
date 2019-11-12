@@ -31,6 +31,10 @@
   min-height: 200px;
 }
 
+.border-15px {
+  border-radius: 15px;
+}
+
 .border-25px {
   border-radius: 25px;
 }

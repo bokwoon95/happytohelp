@@ -58,3 +58,28 @@ func (app *App) studentChat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+func (app *App) studentWs(w http.ResponseWriter, r *http.Request) {
+	log.Println(r.URL)
+	r.ParseForm()
+	app.chatrooms.Lock()
+	var room *Chatroom
+	if len(app.chatrooms.pendingRooms) == 0 {
+		room := newChatroom()
+		go room.run()
+		room.Topics = r.Form["topics"]
+		room.PinnedMessage = r.FormValue("disclosure")
+		randstring, err := generateRandomString()
+		if err != nil {
+			dump(w, err)
+			return
+		}
+		app.chatrooms.pendingRooms[randstring] = room
+	}
+	for _, r := range app.chatrooms.pendingRooms {
+		room = r
+		break
+	}
+	app.chatrooms.Unlock()
+	serveWs(room, w, r)
+}

@@ -2,7 +2,6 @@
 
 let conn;
 let messages = ["Please wait while we find you an available counsellor", "..."];
-let topics = [];
 
 function appendLog(item) {
   let doScroll = log.scrollTop > log.scrollHeight - log.clientHeight - 1;
@@ -35,24 +34,21 @@ function sendmsgOnSubmitOrEnter(event) {
 
 m.mount(document.querySelector("#chat"), {
   oninit: () => {
-    let url = new URL(document.location.origin + document.location.pathname + document.location.search);
-    topics = url.searchParams.getAll("topics");
-    console.log(topics);
-    if (window["WebSocket"]) {
-      conn = new WebSocket(`ws://${document.location.host}/student/chat/ws?topics=relationship`);
-      conn.onclose = function(evt) {
-        messages.push("Connection closed");
-      };
-      conn.onmessage = function(evt) {
-        var responses = evt.data.split("\n");
-        for (let response of responses) {
-          messages.push(response);
-        }
-        m.redraw();
-      };
-    } else {
+    if (!window["WebSocket"]) {
       messages.push("Your browser does not support WebSockets");
+      return;
     }
+    conn = new WebSocket(`ws://${document.location.host}/student/chat/ws${document.location.search}`);
+    conn.onclose = function(evt) {
+      messages.push("Connection closed");
+    };
+    conn.onmessage = function(evt) {
+      let responses = evt.data.split("\n");
+      for (let response of responses) {
+        messages.push(response);
+      }
+      m.redraw();
+    };
   },
   view: () =>
     m(
