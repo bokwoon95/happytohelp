@@ -35,7 +35,7 @@ function sendmsgOnSubmitOrEnter(event) {
 m.mount(document.querySelector("#chat"), {
   oninit: () => {
     if (window["WebSocket"]) {
-      conn = new WebSocket(`ws://${document.location.host}/student-chat/ws`);
+      conn = new WebSocket(`ws://${document.location.host}/student/chat/ws`);
       conn.onclose = function(evt) {
         messages.push("Connection closed");
       };

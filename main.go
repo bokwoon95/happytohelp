@@ -60,8 +60,8 @@ func main() {
 		port:    os.Getenv("PORT"),
 		hash:    hmac.New(sha256.New, []byte(os.Getenv("HMAC_KEY"))),
 	}
-	hub := newHub()
-	go hub.run()
+	room := newChatroom()
+	go room.run()
 
 	http.HandleFunc("/", app.root)
 
@@ -70,7 +70,7 @@ func main() {
 	http.HandleFunc("/student/disclosure", app.studentDisclosure)
 	http.HandleFunc("/student/chat", app.studentChat)
 	http.HandleFunc("/student/chat/ws", func(w http.ResponseWriter, r *http.Request) {
-		serveWs(hub, w, r)
+		serveWs(room, w, r)
 	})
 
 	// Counsellor
@@ -80,7 +80,7 @@ func main() {
 	http.HandleFunc("/counsellor/choose", app.getsession(app.counsellorChoose))
 	http.HandleFunc("/counsellor/chat", app.getsession(app.counsellorChat))
 	http.HandleFunc("/counsellor/chat/ws", func(w http.ResponseWriter, r *http.Request) {
-		serveWs(hub, w, r)
+		serveWs(room, w, r)
 	})
 
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
