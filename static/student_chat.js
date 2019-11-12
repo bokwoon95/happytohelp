@@ -3,18 +3,30 @@
 let conn;
 const messages = ["hello world"];
 
-function sendmsg() {
+function appendLog(item) {
+  const doScroll = log.scrollTop > log.scrollHeight - log.clientHeight - 1;
+  messages.push(item);
+  if (doScroll) {
+    log.scrollTop = log.scrollHeight - log.clientHeight;
+  }
+}
+
+function sendmsgOnSubmitOrEnter(event) {
   try {
     if (!conn) {
       return false;
     }
     const chatbox = document.querySelector("#chatbox");
-    if (!chatbox.value) {
+    const enter = event instanceof KeyboardEvent && event.key === "Enter" && !event.shiftKey;
+    const mouse = event instanceof MouseEvent;
+    if (mouse || enter) {
+      if (!chatbox.value) {
+        return false;
+      }
+      conn.send(chatbox.value);
+      chatbox.value = "";
       return false;
     }
-    conn.send(chatbox.value);
-    chatbox.value = "";
-    return false;
   } catch (err) {
     console.log(err);
   }
@@ -29,7 +41,6 @@ m.mount(document.querySelector("#chat"), {
       };
       conn.onmessage = function(evt) {
         var responses = evt.data.split("\n");
-        console.log(responses);
         for (const response of responses) {
           messages.push(response);
         }
@@ -45,8 +56,8 @@ m.mount(document.querySelector("#chat"), {
       m("div.bg-gray-100.overflow-auto.min-h-200px.p-8", messages.map(msg => m("p", msg))),
       m(
         "form",
-        m("textarea.w-full.bg-gray-200", { id: "chatbox" }),
-        m("button.p-2.bg-green-200", { onclick: sendmsg }, "Submit"),
+        m("textarea.w-full.bg-gray-200.border-box.p-2", { id: "chatbox", onkeypress: sendmsgOnSubmitOrEnter }),
+        m("button.p-2.bg-green-200", { onclick: sendmsgOnSubmitOrEnter }, "Submit"),
       ),
     ),
 });

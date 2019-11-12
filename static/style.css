@@ -1,3 +1,8 @@
+@font-face {
+  font-family: 'Glacial Indifference';
+  src: url('webfont.woff2') format('woff2'), /* Super Modern Browsers */
+}
+
 .comfortaa {
   font-family: 'Comfortaa', cursive;
 }
@@ -49,4 +54,32 @@
 }
 :-ms-input-placeholder {
    font-style: italic;
+}
+
+.glacialindifference {
+  font-family: 'Glacial Indifference', sans-serif;
+}
+
+.hth-blue-100 {
+  color: #d1fdfe;
+}
+
+.hth-blue-200 {
+  color: #b4dfe5;
+}
+
+.hth-blue-300 {
+  color: #303c6c;
+}
+
+.hth-orange-100 {
+  color: #f4966c;
+}
+
+.hth-yellow-100 {
+  color: #fae8a6;
+}
+
+.border-box {
+  box-sizing: border-box;
 }
