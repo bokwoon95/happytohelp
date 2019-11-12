@@ -20,11 +20,11 @@ func (app *App) counsellorChat(w http.ResponseWriter, r *http.Request) {
 			dump(w, err)
 		}
 	default:
-		notfound(w, r)
+		app.notfound(w, r)
 	}
 }
 
-func (app *App) counsellorCategory(w http.ResponseWriter, r *http.Request) {
+func (app *App) counsellorTopic(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.URL)
 	user, ok := r.Context().Value(contextUser).(User)
 	if !ok {
@@ -33,12 +33,12 @@ func (app *App) counsellorCategory(w http.ResponseWriter, r *http.Request) {
 	}
 	switch r.Method {
 	case "GET":
-		err := render(w, r, nil, "counsellor_category.html")
+		err := render(w, r, nil, "counsellor_topics.html")
 		if err != nil {
 			dump(w, err)
 		}
 	default:
-		notfound(w, r)
+		app.notfound(w, r)
 	}
 }
 
@@ -56,6 +56,6 @@ func (app *App) counsellorChoose(w http.ResponseWriter, r *http.Request) {
 			dump(w, err)
 		}
 	default:
-		notfound(w, r)
+		app.notfound(w, r)
 	}
 }

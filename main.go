@@ -66,17 +66,18 @@ func main() {
 	http.HandleFunc("/", app.root)
 
 	// Student
-	http.HandleFunc("/student/category", app.studentCategory)
+	http.HandleFunc("/student/topics", app.studentTopic)
 	http.HandleFunc("/student/disclosure", app.studentDisclosure)
 	http.HandleFunc("/student/chat", app.studentChat)
 	http.HandleFunc("/student/chat/ws", func(w http.ResponseWriter, r *http.Request) {
+		log.Println("topics: " + r.FormValue("topics"))
 		serveWs(room, w, r)
 	})
 
 	// Counsellor
 	http.HandleFunc("/counsellor/login", nusRedirect(app.baseurl+app.port+"/counsellor/login/callback"))
-	http.HandleFunc("/counsellor/login/callback", nusAuthenticate(app.setsession(redirect("/counsellor/category"))))
-	http.HandleFunc("/counsellor/category", app.getsession(app.counsellorCategory))
+	http.HandleFunc("/counsellor/login/callback", nusAuthenticate(app.setsession(redirect("/counsellor/topics"))))
+	http.HandleFunc("/counsellor/topics", app.getsession(app.counsellorTopic))
 	http.HandleFunc("/counsellor/choose", app.getsession(app.counsellorChoose))
 	http.HandleFunc("/counsellor/chat", app.getsession(app.counsellorChat))
 	http.HandleFunc("/counsellor/chat/ws", func(w http.ResponseWriter, r *http.Request) {
@@ -89,6 +90,34 @@ func main() {
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
+}
+
+func render(w http.ResponseWriter, r *http.Request, data interface{}, filenames ...string) (err error) {
+	if len(filenames) == 0 {
+		return wrap(fmt.Errorf("no filenames provided to Render"))
+	}
+	funcs := template.FuncMap{}
+	funcs["AppGetUser"] = func(r *http.Request) func() User {
+		user, _ := r.Context().Value(contextUser).(User)
+		return func() User {
+			return user
+		}
+	}(r)
+	funcs["AppGetTopics"] = func(r *http.Request) func() []string {
+		r.ParseForm()
+		topics := r.Form["topics"]
+		return func() []string {
+			return topics
+		}
+	}(r)
+	filenames = append(filenames, "navbar.html")
+	t, err := template.New(filepath.Base(filenames[0])).Funcs(funcs).ParseFiles(filenames...)
+	if err != nil {
+		return wrap(err)
+	}
+	w.Header().Set("Content-Type", "text/html")
+	err = t.Execute(w, data)
+	return wrap(err)
 }
 
 func (user User) String() string {
@@ -127,23 +156,24 @@ func (app *App) deserialize(input string, output interface{}) (err error) {
 	}
 	computedSignature := app.sign(payload)
 	if providedSignature != computedSignature {
-		return fmt.Errorf("providedSignature did not match computedSignature %+v", struct {
-			Provided string
-			Computed string
-		}{providedSignature, computedSignature})
+		return wrap(fmt.Errorf("providedSignature:%s and computedSignature:%s mismatch", providedSignature, computedSignature))
 	}
 	err = json.Unmarshal(payload, output)
 	return wrap(err)
 }
 
-func notfound(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "404.html")
+func (app *App) notfound(w http.ResponseWriter, r *http.Request) {
+	log.Println(r.URL)
+	err := render(w, r, nil, "404.html")
+	if err != nil {
+		dump(w, err)
+	}
 }
 
 func (app *App) root(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.URL)
 	if r.URL.Path != "/" {
-		notfound(w, r)
+		app.notfound(w, r)
 		return
 	}
 	if r.Method != "GET" {
@@ -155,27 +185,6 @@ func (app *App) root(w http.ResponseWriter, r *http.Request) {
 		dump(w, err)
 	}
 }
-func render(w http.ResponseWriter, r *http.Request, data interface{}, filenames ...string) (err error) {
-	if len(filenames) == 0 {
-		return wrap(fmt.Errorf("no filenames provided to Render"))
-	}
-	funcs := template.FuncMap{}
-	funcs["AppGetUser"] = func(r *http.Request) func() User {
-		user, _ := r.Context().Value(contextUser).(User)
-		return func() User {
-			return user
-		}
-	}(r)
-	filenames = append(filenames, "navbar.html")
-	t, err := template.New(filepath.Base(filenames[0])).Funcs(funcs).ParseFiles(filenames...)
-	if err != nil {
-		return wrap(err)
-	}
-	w.Header().Set("Content-Type", "text/html")
-	err = t.Execute(w, data)
-	return wrap(err)
-}
-
 func wrap(err error) error {
 	if err != nil {
 		if err == sql.ErrNoRows || err == http.ErrNoCookie {

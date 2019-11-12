@@ -1,10 +1,11 @@
 "use strict";
 
 let conn;
-const messages = ["hello world"];
+let messages = ["Please wait while we find you an available counsellor", "..."];
+let topics = [];
 
 function appendLog(item) {
-  const doScroll = log.scrollTop > log.scrollHeight - log.clientHeight - 1;
+  let doScroll = log.scrollTop > log.scrollHeight - log.clientHeight - 1;
   messages.push(item);
   if (doScroll) {
     log.scrollTop = log.scrollHeight - log.clientHeight;
@@ -16,9 +17,9 @@ function sendmsgOnSubmitOrEnter(event) {
     if (!conn) {
       return false;
     }
-    const chatbox = document.querySelector("#chatbox");
-    const enter = event instanceof KeyboardEvent && event.key === "Enter" && !event.shiftKey;
-    const mouse = event instanceof MouseEvent;
+    let chatbox = document.querySelector("#chatbox");
+    let enter = event instanceof KeyboardEvent && event.key === "Enter" && !event.shiftKey;
+    let mouse = event instanceof MouseEvent;
     if (mouse || enter) {
       if (!chatbox.value) {
         return false;
@@ -34,14 +35,17 @@ function sendmsgOnSubmitOrEnter(event) {
 
 m.mount(document.querySelector("#chat"), {
   oninit: () => {
+    let url = new URL(document.location.origin + document.location.pathname + document.location.search);
+    topics = url.searchParams.getAll("topics");
+    console.log(topics);
     if (window["WebSocket"]) {
-      conn = new WebSocket(`ws://${document.location.host}/student/chat/ws`);
+      conn = new WebSocket(`ws://${document.location.host}/student/chat/ws?topics=relationship`);
       conn.onclose = function(evt) {
         messages.push("Connection closed");
       };
       conn.onmessage = function(evt) {
         var responses = evt.data.split("\n");
-        for (const response of responses) {
+        for (let response of responses) {
           messages.push(response);
         }
         m.redraw();

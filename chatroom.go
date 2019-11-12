@@ -2,6 +2,13 @@ package main
 
 import "sync"
 
+const (
+	TopicAcademics = "academics"
+	TopicCareer = "career"
+	TopicRelationship = "relationship"
+	TopicOther = "other"
+)
+
 // Chatroom maintains the set of active clients and broadcasts messages to the
 // clients.
 type Chatroom struct {
@@ -9,6 +16,9 @@ type Chatroom struct {
 
 	// Registered clients.
 	clients map[*Client]bool
+
+	// Topics that the student wishes to talk about
+	topics []string
 
 	// Inbound messages from the clients.
 	broadcast chan []byte
@@ -21,6 +31,18 @@ type Chatroom struct {
 
 	// Shutdown chatroom
 	shutdown chan struct{}
+}
+
+type Chatrooms struct {
+	sync.Mutex
+
+	// List of rooms with one student waiting for a counsellor
+	pendingRooms map[*Chatroom]bool
+
+	// List of rooms with one student and one counsellor already inside
+	fullRooms map[*Chatroom]bool
+
+	//
 }
 
 func newChatroom() *Chatroom {
