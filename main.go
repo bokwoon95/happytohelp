@@ -83,7 +83,7 @@ func main() {
 	http.HandleFunc("/counsellor/topics", app.getsession(app.counsellorTopic))
 	http.HandleFunc("/counsellor/choose", app.getsession(app.counsellorChoose))
 	http.HandleFunc("/counsellor/chat", app.getsession(app.counsellorChat))
-	http.HandleFunc("/counsellor/chat/ws", app.studentWs)
+	http.HandleFunc("/counsellor/chat/ws", app.getsession(app.counsellorWs))
 
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	fmt.Printf("Listening on " + app.baseurl + app.port)
@@ -247,7 +247,7 @@ func (app *App) getsession(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		sessionCookie, err := r.Cookie(sessionCookieName)
 		if err != nil {
-			http.Error(w, "", http.StatusUnauthorized)
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 		var user User

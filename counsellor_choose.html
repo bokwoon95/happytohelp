@@ -12,12 +12,12 @@
     <div class="glacialindifference text-3xl font-bold hth-text-blue-300 p-8">The stories...</div>
     <div id="choose"></div>
     <div class="p-8 pt-0">
-      <a href="/counsellor/chat" class="w-full block hth-bg-orange-100 border-15px p-4 mb-4">
+      <a href="/counsellor/chat" class="w-full block hth-bg-orange-100 border-15px p-4 mb-4 text-left">
         <p>I am a Year 4 student am I am afraid</p>
         <p>Topics: </p>
       </a>
       {{range $i, $KeyRoom := $.PendingRooms}}
-      <a href="/counsellor/chat?key={{$KeyRoom.Key}}" class="w-full block hth-bg-orange-100 border-15px p-4 mb-4">
+      <a href="/counsellor/chat?key={{$KeyRoom.Key}}" class="w-full block hth-bg-orange-100 border-15px p-4 mb-4 text-left">
         <p>{{$KeyRoom.Room.PinnedMessage}}</p>
         <p>Topics: {{range $KeyRoom.Room.Topics}}{{.}},{{end}}</p>
       </a>

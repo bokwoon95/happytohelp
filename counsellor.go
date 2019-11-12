@@ -13,8 +13,17 @@ func (app *App) counsellorChat(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Unable to get user from context %s", user)
 		return
 	}
+	key := r.FormValue("key")
+	app.chatrooms.Lock()
+	defer app.chatrooms.Unlock()
+	_, ok = app.chatrooms.pendingRooms[key]
+	if !ok {
+		http.Error(w, fmt.Sprintf("Invalid room key %s", key), http.StatusBadRequest)
+		return
+	}
 	switch r.Method {
-	case "GET":
+	case "GET", "POST":
+		log.Println("gotcha")
 		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 		err := render(w, r, nil, "counsellor_chat.html")
 		if err != nil {
@@ -77,13 +86,18 @@ func (app *App) counsellorChoose(w http.ResponseWriter, r *http.Request) {
 
 func (app *App) counsellorWs(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.URL)
+	user, ok := r.Context().Value(contextUser).(User)
+	if !ok {
+		fmt.Fprintf(w, "Unable to get user from context %s", user)
+		return
+	}
 	key := r.FormValue("key")
-	log.Println("key: ", key)
 	app.chatrooms.Lock()
 	defer app.chatrooms.Unlock()
 	room, ok := app.chatrooms.pendingRooms[key]
-	if !ok || room.clients == nil {
-		fmt.Fprintf(w, "Invalid room key %s", key)
+	room.broadcast <- []byte(fmt.Sprintf("Counsellor found. Say hi to %s!", user.Displayname))
+	if !ok {
+		http.Error(w, fmt.Sprintf("Invalid room key %s", key), http.StatusBadRequest)
 		return
 	}
 	serveWs(room, w, r)
