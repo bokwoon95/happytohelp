@@ -15,12 +15,13 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
 
-	// _ "github.com/joho/godotenv/autoload"
+	_ "github.com/joho/godotenv/autoload"
 	// _ "github.com/lib/pq"
 	"github.com/pkg/errors"
 )
@@ -29,7 +30,6 @@ const sessionCookieName = "_happytohelp_session"
 
 var port = flag.String("port", ":8080", "http service address")
 var baseurl = flag.String("baseurl", "http://127.0.0.1", "base url without port")
-var hmackey = flag.String("hmackey", "this-is-my-hmac-key", "hmac key for hashing")
 
 type appContext string
 
@@ -61,11 +61,17 @@ func main() {
 	// if err != nil {
 	// 	log.Fatal("can't ping db: ", err)
 	// }
+	if *baseurl == "127.0.0.1" && os.Getenv("baseurl") != "" {
+		*baseurl = os.Getenv("baseurl")
+	}
+	if *port == ":8080" && os.Getenv("port") != "" {
+		*port = os.Getenv("port")
+	}
 	app := App{
 		// db:      db,
 		baseurl: *baseurl,
 		port:    *port,
-		hash:    hmac.New(sha256.New, []byte(*hmackey)),
+		hash:    hmac.New(sha256.New, []byte("this-is-my-hmackey")),
 		chatrooms: &Chatrooms{
 			pendingRooms: make(map[string]*Chatroom),
 			fullRooms:    make(map[string]*Chatroom),
