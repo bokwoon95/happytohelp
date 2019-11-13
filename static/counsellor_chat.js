@@ -36,6 +36,7 @@ function sendmsgOnSubmitOrEnter(event) {
       if (doScroll) {
         chatlog.scrollTop = chatlog.scrollHeight - chatlog.clientHeight;
       }
+      chat.scrollTop = 999;
       chatbox.value = "";
       return false;
     }

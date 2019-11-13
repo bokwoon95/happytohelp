@@ -1,6 +1,0 @@
-Differentiate between counsellor and student messages
-Add user icons
---
-change 'key' to 'room' for counsellor_chat
-render user: message instead of json string
-good chat scrolling
