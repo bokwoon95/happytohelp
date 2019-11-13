@@ -8,24 +8,28 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"hash"
 	"html/template"
 	"io"
 	"log"
 	"net/http"
-	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
 
-	_ "github.com/joho/godotenv/autoload"
-	_ "github.com/lib/pq"
+	// _ "github.com/joho/godotenv/autoload"
+	// _ "github.com/lib/pq"
 	"github.com/pkg/errors"
 )
 
 const sessionCookieName = "_happytohelp_session"
+
+var port = flag.String("port", ":8080", "http service address")
+var baseurl = flag.String("baseurl", "http://127.0.0.1", "base url without port")
+var hmackey = flag.String("hmackey", "this-is-my-hmac-key", "hmac key for hashing")
 
 type appContext string
 
@@ -48,19 +52,20 @@ type User struct {
 }
 
 func main() {
-	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
-	if err != nil {
-		log.Fatal("can't open db: ", err)
-	}
-	err = db.Ping()
-	if err != nil {
-		log.Fatal("can't ping db: ", err)
-	}
+	flag.Parse()
+	// db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	// if err != nil {
+	// 	log.Fatal("can't open db: ", err)
+	// }
+	// err = db.Ping()
+	// if err != nil {
+	// 	log.Fatal("can't ping db: ", err)
+	// }
 	app := App{
-		db:      db,
-		baseurl: os.Getenv("BASEURL"),
-		port:    os.Getenv("PORT"),
-		hash:    hmac.New(sha256.New, []byte(os.Getenv("HMAC_KEY"))),
+		// db:      db,
+		baseurl: *baseurl,
+		port:    *port,
+		hash:    hmac.New(sha256.New, []byte(*hmackey)),
 		chatrooms: &Chatrooms{
 			pendingRooms: make(map[string]*Chatroom),
 			fullRooms:    make(map[string]*Chatroom),
@@ -84,7 +89,7 @@ func main() {
 
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	fmt.Printf("Listening on " + app.baseurl + app.port)
-	err = http.ListenAndServe(app.port, nil)
+	err := http.ListenAndServe(app.port, nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}

@@ -3,6 +3,11 @@
   src: url("/static/img/glacialindifference-bold_copy-webfont.woff2") format("woff2"); /* Super Modern Browsers */
 }
 
+@font-face {
+  font-family: "Glacial Indifference Regular";
+  src: url("/static/img/glacialindifference-regular_copy-webfont.woff2") format("woff2"); /* Super Modern Browsers */
+}
+
 .comfortaa {
   font-family: "Comfortaa", cursive;
 }
@@ -62,6 +67,10 @@
 
 .glacialindifference {
   font-family: "Glacial Indifference", sans-serif;
+}
+
+.glacialindifference-reg {
+  font-family: "Glacial Indifference Regular", sans-serif;
 }
 
 .hth-text-blue-100 {

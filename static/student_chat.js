@@ -86,6 +86,10 @@ m.mount(document.querySelector("#chat"), {
       : m(
           "div.hth-bg-blue-300.min-h-screen",
           m(
+            "div.hth-text-blue-200.pt-8.px-16.text-center.glacialindifference-reg.italic",
+            "You can start chatting now. This chat will be completely anonymous and no data will be saved. Please be assured that all our volunteers are your fellow students.",
+          ),
+          m(
             "div.hth-bg-blue-300.overflow-auto.min-h-200px.p-8",
             { id: "chatlog" },
             messages.map(msg => m("div.mx-4.bg-gray-200.p-4.mb-8.rounded", m.trust(msg))),
