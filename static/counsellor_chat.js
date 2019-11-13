@@ -2,6 +2,8 @@
 
 let conn;
 let messages = [];
+let roomId;
+let displayname;
 
 function appendLog(item) {
   let doScroll = log.scrollTop > log.scrollHeight - log.clientHeight - 1;
@@ -23,7 +25,12 @@ function sendmsgOnSubmitOrEnter(event) {
       if (!chatbox.value) {
         return false;
       }
-      conn.send(chatbox.value);
+      conn.send(
+        JSON.stringify({
+          sender: displayname,
+          message: chatbox.value,
+        }),
+      );
       chatbox.value = "";
       return false;
     }
@@ -34,21 +41,31 @@ function sendmsgOnSubmitOrEnter(event) {
 
 m.mount(document.querySelector("#chat"), {
   oninit: () => {
-    if (!window["WebSocket"]) {
-      messages.push("Your browser does not support WebSockets");
-      return;
-    }
-    conn = new WebSocket(`ws://${document.location.host}/counsellor/chat/ws${document.location.search}`);
-    conn.onclose = function(evt) {
-      messages.push("Connection closed");
-    };
-    conn.onmessage = function(evt) {
-      let responses = evt.data.split("\n");
-      for (let response of responses) {
-        messages.push(response);
+    try {
+      if (!window["WebSocket"]) {
+        messages.push("Your browser does not support WebSockets");
+        return;
       }
-      m.redraw();
-    };
+      conn = new WebSocket(`ws://${document.location.host}/counsellor/chat/ws${document.location.search}`);
+      conn.onclose = function(evt) {
+        messages.push("Connection closed");
+      };
+      conn.onmessage = function(evt) {
+        let responses = evt.data.split("\n");
+        for (let response of responses) {
+          let event = JSON.parse(response);
+          let text = event.sender !== displayname ? "Anon: " : `${event.sender}: `;
+          text += event.message;
+          messages.push(text);
+        }
+        m.redraw();
+      };
+      let url = new URL(document.location.origin + document.location.pathname + document.location.search);
+      roomId = url.searchParams.get("room");
+      displayname = document.querySelector("#displayname") && document.querySelector("#displayname").innerHTML;
+    } catch (err) {
+      console.log(err);
+    }
   },
   view: () =>
     m(

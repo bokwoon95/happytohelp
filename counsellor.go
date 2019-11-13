@@ -13,7 +13,7 @@ func (app *App) counsellorChat(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Unable to get user from context %s", user)
 		return
 	}
-	key := r.FormValue("key")
+	key := r.FormValue("room")
 	app.chatrooms.Lock()
 	defer app.chatrooms.Unlock()
 	_, ok = app.chatrooms.pendingRooms[key]
@@ -23,9 +23,12 @@ func (app *App) counsellorChat(w http.ResponseWriter, r *http.Request) {
 	}
 	switch r.Method {
 	case "GET", "POST":
-		log.Println("gotcha")
+		type Data struct {
+			User User
+		}
+		data := Data{User: user}
 		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
-		err := render(w, r, nil, "counsellor_chat.html")
+		err := render(w, r, data, "counsellor_chat.html")
 		if err != nil {
 			dump(w, err)
 		}
@@ -91,14 +94,23 @@ func (app *App) counsellorWs(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Unable to get user from context %s", user)
 		return
 	}
-	key := r.FormValue("key")
+	// event := Event{
+	// 	Sender:  user.Displayname,
+	// 	Message: fmt.Sprintf("Counsellor found. Say hi to %s!", user.Displayname),
+	// }
+	// serializedEvent, err := json.Marshal(event)
+	// if err != nil {
+	// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+	// 	return
+	// }
+	key := r.FormValue("room")
 	app.chatrooms.Lock()
 	defer app.chatrooms.Unlock()
 	room, ok := app.chatrooms.pendingRooms[key]
-	room.broadcast <- []byte(fmt.Sprintf("Counsellor found. Say hi to %s!", user.Displayname))
 	if !ok {
 		http.Error(w, fmt.Sprintf("Invalid room key %s", key), http.StatusBadRequest)
 		return
 	}
+	// room.broadcast <- []byte(serializedEvent)
 	serveWs(room, w, r)
 }

@@ -10,6 +10,7 @@
   <body>
     {{template "navbar.html"}}
     <div id="chat" class=""></div>
+    <div id="displayname" hidden>{{$.User.Displayname}}</div>
     <script src="https://unpkg.com/mithril/mithril.js"></script>
     <script src="/static/counsellor_chat.js"></script>
   </body>

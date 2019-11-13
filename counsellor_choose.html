@@ -17,7 +17,7 @@
     <div id="choose"></div>
     <div class="p-8 pt-0">
       {{range $i, $KeyRoom := $.PendingRooms}}
-      <a href="/counsellor/chat?key={{$KeyRoom.Key}}" class="w-full block hth-bg-orange-100 border-15px p-4 mb-4 text-left">
+      <a href="/counsellor/chat?room={{$KeyRoom.Key}}" class="w-full block hth-bg-orange-100 border-15px p-4 mb-4 text-left">
         <p>{{$KeyRoom.Room.PinnedMessage}}</p>
         <p>Topics: {{range $KeyRoom.Room.Topics}}{{.}},{{end}}</p>
       </a>

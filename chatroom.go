@@ -9,6 +9,11 @@ const (
 	TopicOther        = "other"
 )
 
+type Event struct {
+	Sender  string `json:"sender"`
+	Message string `json:"message"`
+}
+
 // Chatroom maintains the set of active clients and broadcasts messages to the
 // clients.
 type Chatroom struct {

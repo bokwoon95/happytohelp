@@ -1,7 +1,8 @@
 "use strict";
 
-let conn;
-let messages = [];
+let conn; // variable that holds the websocket connection with the server
+let messages = []; // list of messages to display
+let roomId;
 
 function appendLog(item) {
   let doScroll = log.scrollTop > log.scrollHeight - log.clientHeight - 1;
@@ -23,7 +24,12 @@ function sendmsgOnSubmitOrEnter(event) {
       if (!chatbox.value) {
         return false;
       }
-      conn.send(chatbox.value);
+      conn.send(
+        JSON.stringify({
+          sender: roomId,
+          message: chatbox.value,
+        }),
+      );
       chatbox.value = "";
       return false;
     }
@@ -34,27 +40,39 @@ function sendmsgOnSubmitOrEnter(event) {
 
 m.mount(document.querySelector("#chat"), {
   oninit: () => {
-    if (!window["WebSocket"]) {
-      messages.push("Your browser does not support WebSockets");
-      return;
-    }
-    conn = new WebSocket(`ws://${document.location.host}/student/chat/ws${document.location.search}`);
-    conn.onclose = function(evt) {
-      messages.push("Connection closed");
-    };
-    conn.onmessage = function(evt) {
-      let responses = evt.data.split("\n");
-      for (let response of responses) {
-        messages.push(response);
+    try {
+      if (!window["WebSocket"]) {
+        messages.push("Your browser does not support WebSockets");
+        return;
       }
-      m.redraw();
-    };
+      conn = new WebSocket(`ws://${document.location.host}/student/chat/ws${document.location.search}`);
+      conn.onclose = function(evt) {
+        messages.push("Connection closed");
+      };
+      conn.onmessage = function(evt) {
+        let responses = evt.data.split("\n");
+        for (let response of responses) {
+          let event = JSON.parse(response);
+          let text = event.sender === roomId ? "You: " : `${event.sender}: `;
+          text += event.message;
+          messages.push(text);
+        }
+        m.redraw();
+      };
+      let url = new URL(document.location.origin + document.location.pathname + document.location.search);
+      roomId = url.searchParams.get("room");
+    } catch (err) {
+      console.log(err);
+    }
   },
   view: () => {
     return messages.length == 0
       ? m(
           "div",
-          m("div.text-center.text-5xl.hth-text-blue-300.px-16", "Thank you! Please give our volunteers some time to connect with you"),
+          m(
+            "div.text-center.text-5xl.hth-text-blue-300.px-16",
+            "Thank you! Please give our volunteers some time to connect with you",
+          ),
           m("img.m-auto", { src: "/static/img/HappyToHelp_Logo.svg", height: 500, width: 500 }),
         )
       : m(
