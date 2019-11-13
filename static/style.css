@@ -1,6 +1,6 @@
 @font-face {
   font-family: "Glacial Indifference";
-  src: url("webfont.woff2") format("woff2"); /* Super Modern Browsers */
+  src: url("/static/img/glacialindifference-bold_copy-webfont.woff2") format("woff2"); /* Super Modern Browsers */
 }
 
 .comfortaa {
@@ -149,10 +149,15 @@
 }
 
 #footer {
-    background-color: #F3F3F3;
-    padding-top: 10px;
-    padding-bottom: 0px;
-    position:fixed;
-    bottom:0;
-    width:100%;
+  background-color: #f3f3f3;
+  padding-top: 10px;
+  padding-bottom: 0px;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+}
+
+#chatlog {
+  overflow-y: auto;
+  max-height: 70vh;
 }

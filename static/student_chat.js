@@ -18,18 +18,23 @@ function sendmsgOnSubmitOrEnter(event) {
       return false;
     }
     let chatbox = document.querySelector("#chatbox");
+    let chatlog = document.querySelector("#chatlog");
     let enter = event instanceof KeyboardEvent && event.key === "Enter" && !event.shiftKey;
     let mouse = event instanceof MouseEvent;
     if (mouse || enter) {
       if (!chatbox.value) {
         return false;
       }
+      let doScroll = chatlog.scrollTop > chatlog.scrollHeight - chatlog.clientHeight - 1;
       conn.send(
         JSON.stringify({
           sender: roomId,
           message: chatbox.value,
         }),
       );
+      if (doScroll) {
+        chatlog.scrollTop = chatlog.scrollHeight - chatlog.clientHeight;
+      }
       chatbox.value = "";
       return false;
     }
@@ -53,7 +58,10 @@ m.mount(document.querySelector("#chat"), {
         let responses = evt.data.split("\n");
         for (let response of responses) {
           let event = JSON.parse(response);
-          let text = event.sender === roomId ? "You: " : `${event.sender}: `;
+          let text =
+            event.sender === roomId
+              ? `<b class="text-teal-700">You:</b> `
+              : `<b class="text-pink-700">${event.sender}:</b> `;
           text += event.message;
           messages.push(text);
         }
@@ -79,7 +87,8 @@ m.mount(document.querySelector("#chat"), {
           "div.hth-bg-blue-300.min-h-screen",
           m(
             "div.hth-bg-blue-300.overflow-auto.min-h-200px.p-8",
-            messages.map(msg => m("div.mx-4.bg-gray-200.p-4.mb-8.rounded", msg)),
+            { id: "chatlog" },
+            messages.map(msg => m("div.mx-4.bg-gray-200.p-4.mb-8.rounded", m.trust(msg))),
           ),
           m(
             "form.px-12",
