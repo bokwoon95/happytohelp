@@ -1,10 +1,11 @@
 "use strict";
 
-let conn;
-let messages = [];
-let roomId;
+let conn; // variable that holds the websocket connection with the server
+let messages = []; // list of messages to display
+let roomId; // room key, all participants with the same room key
 let displayname;
 
+// Not used
 function appendLog(item) {
   let doScroll = log.scrollTop > log.scrollHeight - log.clientHeight - 1;
   messages.push(item);

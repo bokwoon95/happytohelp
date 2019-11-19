@@ -80,16 +80,16 @@ func (room *Chatroom) run() {
 				delete(room.clients, client)
 				close(client.send)
 			}
-			if len(room.clients) == 0 {
-				room.chatrooms.Lock()
-				for k, r := range room.chatrooms.pendingRooms {
-					if r == room {
-						delete(room.chatrooms.pendingRooms, k)
-					}
-				}
-				room.chatrooms.Unlock()
-				return
-			}
+			// if len(room.clients) == 0 {
+			// 	room.chatrooms.Lock()
+			// 	for k, r := range room.chatrooms.pendingRooms {
+			// 		if r == room {
+			// 			delete(room.chatrooms.pendingRooms, k)
+			// 		}
+			// 	}
+			// 	room.chatrooms.Unlock()
+			// 	return
+			// }
 			room.Unlock()
 		case message := <-room.broadcast:
 			room.Lock()

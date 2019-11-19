@@ -45,6 +45,7 @@ func (app *App) studentDisclosure(w http.ResponseWriter, r *http.Request) {
 			dump(w, err)
 			return
 		}
+		key = "fixed_room_key,modify_room_key_in_student_dot_go"
 		q.Add("room", key)
 		u.RawQuery = q.Encode()
 		// Create new chat room

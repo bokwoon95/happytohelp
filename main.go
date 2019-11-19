@@ -15,13 +15,12 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
 
-	_ "github.com/joho/godotenv/autoload"
+	// _ "github.com/joho/godotenv/autoload"
 	// _ "github.com/lib/pq"
 	"github.com/pkg/errors"
 )
@@ -61,12 +60,12 @@ func main() {
 	// if err != nil {
 	// 	log.Fatal("can't ping db: ", err)
 	// }
-	if *baseurl == "127.0.0.1" && os.Getenv("baseurl") != "" {
-		*baseurl = os.Getenv("baseurl")
-	}
-	if *port == ":8080" && os.Getenv("port") != "" {
-		*port = os.Getenv("port")
-	}
+	// if *baseurl == "127.0.0.1" && os.Getenv("baseurl") != "" {
+	// 	*baseurl = os.Getenv("baseurl")
+	// }
+	// if *port == ":8080" && os.Getenv("port") != "" {
+	// 	*port = os.Getenv("port")
+	// }
 	app := App{
 		// db:      db,
 		baseurl: *baseurl,

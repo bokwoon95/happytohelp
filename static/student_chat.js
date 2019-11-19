@@ -2,8 +2,9 @@
 
 let conn; // variable that holds the websocket connection with the server
 let messages = []; // list of messages to display
-let roomId;
+let roomId; // room key, all participants with the same room key
 
+// Not used
 function appendLog(item) {
   let doScroll = log.scrollTop > log.scrollHeight - log.clientHeight - 1;
   messages.push(item);
@@ -74,7 +75,7 @@ m.mount(document.querySelector("#chat"), {
     }
   },
   view: () => {
-    return messages.length == 0
+    return false //messages.length == 0
       ? m(
           "div",
           m(
